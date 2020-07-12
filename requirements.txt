@@ -1,0 +1,4 @@
+numpy
+sciket-image
+sciket-video
+matplotlib
