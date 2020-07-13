@@ -18,7 +18,7 @@
     ```
     conda create -n tracking python=3.7 jupyter
     source activate tracking
-    conda install -c conda-forge ffmpeg
+    conda install ffmpeg
     pip install -r requirements.txt
     ```
 
