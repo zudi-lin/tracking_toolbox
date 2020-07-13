@@ -26,4 +26,6 @@
 
 ## Quick Start <a name="quick-start"></a>
 
-Run `jupyter notebook` and open `tracking.ipynb`.
+* If the virtual env is not activated, run `source activate tracking`.
+* If you are not in the `tracking_toolbox` folder, navigate to the folder.
+* Run `jupyter notebook` and open `tracking.ipynb`.
