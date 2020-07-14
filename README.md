@@ -16,7 +16,7 @@
 
 * Create a new conda environment by running:
     ```
-    conda create -n tracking python=3.7 jupyter
+    conda create -n tracking python=3.7 jupyter 
     source activate tracking
     conda install ffmpeg
     pip install -r requirements.txt
@@ -28,4 +28,4 @@
 
 * If the virtual env is not activated, run `source activate tracking`.
 * If you are not in the `tracking_toolbox` folder, navigate to the folder.
-* Run `jupyter notebook` and open `tracking.ipynb`.
+* Run `jupyter notebook` and open `tracking.ipynb` (please use `which jupyter` to check if the jupyter in this virtual env is being used).
