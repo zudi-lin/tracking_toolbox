@@ -21,6 +21,13 @@ def string2time(timepoint):
     minutes, seconds = timepoint.split(':')
     return int(minutes)*60 + int(seconds)
 
+def center2dist(center1, center2):
+    # Euclidean distance between two centers 
+    dist = np.array(center1) - np.array(center2)
+    dist = (dist**2).sum()
+    dist = np.sqrt(dist)
+    return dist
+
 def trim_video(video, metadata, start=None, end=None):
     frame_rate = int(metadata["video"]['@avg_frame_rate'].split('/')[0])
     print("Frame rate: ", frame_rate)
@@ -48,15 +55,27 @@ def load_video(filename, down_sample=3, start=None, end=None):
     print(video.shape, video_gray.shape)
     return video, video_gray
 
-def save_video(video, video_gray, center_video, output_name="outputvideo.mp4"):
-    video = (video*255).astype(np.uint8)
+def save_video(video, video_gray, center_video, output_name="outputvideo.mp4", track=False):
+    video = 255-(video*255).astype(np.uint8)
     dummy = np.zeros(video_gray.shape, dtype=np.uint8)
     
-    struct = disk(3)[None,:,:]
+    struct = disk(4)[None,:,:]
     center_video = dilation(center_video, struct)
     center_video = (center_video*255).astype(np.uint8)
     center_video = np.stack([center_video, dummy, dummy], 3)
+
+    if track: 
+        center_video = show_track(center_video)
     
     output_video = np.maximum(video, center_video)
     print(output_video.shape)
     skvideo.io.vwrite(output_name, output_video)
+
+def show_track(center_video):
+    output = center_video.copy()
+    num_points = 30
+    for i in range(1, num_points+1):
+        track_new = center_video.copy()[:-i]
+        track_new = np.clip(track_new, a_min=0, a_max=255-5*i)
+        output[i:] = np.maximum(output[i:], track_new)
+    return output

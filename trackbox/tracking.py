@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 from skimage.color import rgb2gray
 from skimage.measure import label
 from skimage.morphology import remove_small_objects, erosion, dilation, disk
+from skimage.filters import gaussian
 
 def find_valid_region(image, thres=32, size_thres=128, show_imgs=False):
     image = (image-image.min())/(image.max()-image.min())
@@ -27,8 +28,9 @@ def find_valid_region(image, thres=32, size_thres=128, show_imgs=False):
     valid_mask = erosion(valid_mask, np.ones((3,3), dtype=np.uint8))
     return valid_mask
     
-def segment_image(image, show_imgs=False, thres=60, size_thres=64, valid_region=None):
+def segment_image(image, show_imgs=False, thres=128, size_thres=64, valid_region=None):
     image = (image-image.min())/(image.max()-image.min())
+    image = gaussian(image, sigma=1, preserve_range=True)
     image = (image*255).astype(np.uint8)
     binary = (image > thres).astype(np.uint8)
     binary = erosion(binary)
@@ -36,11 +38,11 @@ def segment_image(image, show_imgs=False, thres=60, size_thres=64, valid_region=
         binary = binary * valid_region
     
     segmentation = label(binary)
-    if len(np.unique(segmentation)>1):
+    if len(np.unique(segmentation))>1:
         segmentation = remove_small_objects(segmentation, size_thres)
             
     indices, counts = np.unique(segmentation, return_counts=True)
-    pos = [i for i in range(len(counts)) if counts[i]>300 and counts[i]<1500]
+    pos = [i for i in range(len(counts)) if counts[i]>200 and counts[i]<1600]
     # print(indices, counts, pos)
     if len(pos)>=1: 
         target_idx = indices[pos[0]]
@@ -49,9 +51,6 @@ def segment_image(image, show_imgs=False, thres=60, size_thres=64, valid_region=
         foreground_coord = np.where(target!=0)
         center = [int(foreground_coord[0].astype(float).mean()),
                   int(foreground_coord[1].astype(float).mean())]
-
-        # if center[1] == 81 or center[1] == 82:
-        #     show_imgs = True
 
         if show_imgs:
             plt.figure(figsize=(20,10))
