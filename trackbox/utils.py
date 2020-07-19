@@ -30,7 +30,7 @@ def center2dist(center1, center2):
 
 def trim_video(video, metadata, start=None, end=None):
     frame_rate = int(metadata["video"]['@avg_frame_rate'].split('/')[0])
-    print("Frame rate: ", frame_rate)
+    print("Frame rate of the video: ", frame_rate)
     if start is not None:
         start_frame = string2time(start) * frame_rate
     else:
@@ -41,19 +41,19 @@ def trim_video(video, metadata, start=None, end=None):
         end_frame = video.shape[0]
     end_frame = min(end_frame, video.shape[0])
     trimmed_video = video[start_frame:end_frame]
-    return trimmed_video
+    return trimmed_video, frame_rate
 
-def load_video(filename, down_sample=3, start=None, end=None):
+def load_video(filename, subsample=3, start=None, end=None):
     # load data
     video = skvideo.io.vread(filename)
     metadata = skvideo.io.ffprobe(filename)
     if start is not None or end is not None:
-        video = trim_video(video, metadata, start, end)
-    if down_sample!=1:
-        video = video[::down_sample]
+        video, frame_rate = trim_video(video, metadata, start, end)
+    if subsample!=1:
+        video = video[::subsample]
     video_gray = rgb2gray(video)
     print(video.shape, video_gray.shape)
-    return video, video_gray
+    return video, video_gray, float(frame_rate) / float(subsample)
 
 def save_video(video, video_gray, center_video, output_name="outputvideo.mp4", track=False):
     video = 255-(video*255).astype(np.uint8)

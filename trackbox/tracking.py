@@ -9,7 +9,7 @@ from skimage.filters import gaussian
 def find_valid_region(image, thres=32, size_thres=128, show_imgs=False):
     image = (image-image.min())/(image.max()-image.min())
     image = (image*255).astype(np.uint8)
-    binary = (image > thres).astype(np.uint8)
+    binary = (image < thres).astype(np.uint8)
     segmentation = label(binary)
     segmentation = remove_small_objects(segmentation, size_thres)
     indices, counts = np.unique(segmentation, return_counts=True)
@@ -24,13 +24,18 @@ def find_valid_region(image, thres=32, size_thres=128, show_imgs=False):
             plt.title(i)
             plt.show()
 
-    valid_mask = (segmentation==0).astype(np.uint8)
+    pos = np.argmax(counts)
+    valid_mask = (segmentation==indices[pos]).astype(np.uint8)
     valid_mask = erosion(valid_mask, np.ones((3,3), dtype=np.uint8))
-    return valid_mask
+
+    ycoord, xcoord = np.where(valid_mask==1)
+    height = ycoord.max() - ycoord.min()
+    width  = xcoord.max() - xcoord.min()
+    return valid_mask, height, width
     
 def segment_image(image, show_imgs=False, thres=128, size_thres=64, valid_region=None):
     image = (image-image.min())/(image.max()-image.min())
-    image = gaussian(image, sigma=1, preserve_range=True)
+    # image = gaussian(image, sigma=1, preserve_range=True)
     image = (image*255).astype(np.uint8)
     binary = (image > thres).astype(np.uint8)
     binary = erosion(binary)
