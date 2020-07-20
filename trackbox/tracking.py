@@ -7,6 +7,8 @@ from skimage.morphology import remove_small_objects, erosion, dilation, disk
 from skimage.filters import gaussian
 
 def find_valid_region(image, thres=32, size_thres=128, show_imgs=False):
+    """ Calculate the valid region mask of the chamber.
+    """
     image = (image-image.min())/(image.max()-image.min())
     image = (image*255).astype(np.uint8)
     binary = (image < thres).astype(np.uint8)
@@ -33,14 +35,27 @@ def find_valid_region(image, thres=32, size_thres=128, show_imgs=False):
     width  = xcoord.max() - xcoord.min()
     return valid_mask, height, width
     
-def segment_image(image, show_imgs=False, thres=128, size_thres=64, valid_region=None):
+def segment_image(image, valid_region, show_imgs=False, thres=128, size_thres=64, 
+                  relative_brightness=True, filtering=False):
+    """Locate the target animal in each frame by image segmentation
+    """
+    value_min, value_max = image.min(), image.max()
+    image = image * valid_region
+    image = np.clip(image, a_min=value_min, a_max=value_max)
     image = (image-image.min())/(image.max()-image.min())
-    # image = gaussian(image, sigma=1, preserve_range=True)
+    if filtering:
+        image = gaussian(image, sigma=1, preserve_range=True)
     image = (image*255).astype(np.uint8)
-    binary = (image > thres).astype(np.uint8)
+
+    if relative_brightness:
+        temp = image.copy()
+        temp_thres = (temp.max() + temp.mean()) // 2 
+        binary = (image > temp_thres).astype(np.uint8)
+    else:
+        binary = (image > thres).astype(np.uint8)
+
     binary = erosion(binary)
-    if valid_region is not None:
-        binary = binary * valid_region
+    binary = binary * valid_region
     
     segmentation = label(binary)
     if len(np.unique(segmentation))>1:
@@ -59,18 +74,26 @@ def segment_image(image, show_imgs=False, thres=128, size_thres=64, valid_region
 
         if show_imgs:
             plt.figure(figsize=(20,10))
+
             plt.subplot(141)
             plt.imshow(binary*255, cmap='gray')
+            plt.title('binary')
             plt.axis('off')
+
             plt.subplot(142)
             plt.imshow(segmentation, cmap='tab20c')
+            plt.title('segmentation')
             plt.axis('off')
+
             plt.subplot(143)
             plt.imshow(target, cmap='gray')
+            plt.title('target')
             plt.axis('off')
+
             plt.subplot(144)
             plt.imshow(image, cmap='gray')
             plt.scatter(center[1], center[0], c='r', s=20)
+            plt.title('tracking [%d %d]' % (center[1], center[0]))
             plt.axis('off')
             plt.show()
             

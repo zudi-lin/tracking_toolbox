@@ -56,8 +56,9 @@ def load_video(filename, subsample=3, start=None, end=None):
     return video, video_gray, float(frame_rate) / float(subsample)
 
 def save_video(video, video_gray, center_video, output_name="outputvideo.mp4", 
-               track=False, frame_rate=15, verbosity=1):
-    video = 255-(video*255).astype(np.uint8)
+               track=False, frame_rate=15, verbosity=0, show_example=False):
+    if video.max() < 1.0:
+        video = 255-(video*255).astype(np.uint8)
     dummy = np.zeros(video_gray.shape, dtype=np.uint8)
     
     struct = disk(4)[None,:,:]
@@ -70,6 +71,16 @@ def save_video(video, video_gray, center_video, output_name="outputvideo.mp4",
     
     output_video = np.maximum(video, center_video)
     print(output_video.shape)
+    if show_example:
+        plt.figure(figsize=(20,10))
+        plt.subplot(131)
+        plt.imshow(video[0])
+        plt.subplot(132)
+        plt.imshow(video_gray[0], cmap='gray')
+        plt.subplot(133)
+        plt.imshow(output_video[0])
+        plt.show()
+    
     outputdict={'-r': str(frame_rate)}
     skvideo.io.vwrite(output_name, output_video, outputdict=outputdict,
                       verbosity=verbosity)
