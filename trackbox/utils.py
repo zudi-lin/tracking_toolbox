@@ -8,12 +8,15 @@ from skimage.color import rgb2gray
 from skimage.measure import label
 from skimage.morphology import remove_small_objects, erosion, dilation, disk
 
+global chunks
+
 def show_rand_imgs(data, num=5, cmap=None):
     plt.figure(figsize=(20,5))
     for i in range(num):
         rand_idx = np.random.randint(0, data.shape[0])
         plt.subplot('1%d%d' % (num, i+1))
         plt.imshow(data[rand_idx], cmap=cmap)
+        plt.title("Frame %d" % rand_idx)
         plt.axis('off')
     plt.show()
 
@@ -43,15 +46,24 @@ def trim_video(video, metadata, start=None, end=None):
     trimmed_video = video[start_frame:end_frame]
     return trimmed_video, frame_rate
 
-def load_video(filename, subsample=3, start=None, end=None):
+def rgb2gray_chunk(chunk):
+    return rgb2gray(chunk)
+
+def load_video(filename, subsample=3, start=None, end=None, p=None, num_cores=1):
     # load data
     video = skvideo.io.vread(filename)
+
     metadata = skvideo.io.ffprobe(filename)
     if start is not None or end is not None:
         video, frame_rate = trim_video(video, metadata, start, end)
     if subsample!=1:
         video = video[::subsample]
-    video_gray = rgb2gray(video)
+    if p is not None:
+        chunks = np.array_split(video.copy(), num_cores)
+        results = p.map(rgb2gray_chunk, chunks)
+        video_gray = np.concatenate(results, 0)
+    else:
+        video_gray = rgb2gray(video)
     print(video.shape, video_gray.shape)
     return video, video_gray, float(frame_rate) / float(subsample)
 
