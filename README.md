@@ -2,7 +2,8 @@
 
 1. [Installation](#installation)
 2. [Quick Start](#quick-start)
-3. [Citation](#citation)
+3. [Key Features](#features)
+4. [Citation](#citation)
 
 ## Installation <a name="installation"></a>
 
@@ -26,7 +27,7 @@ a 2017 Macbook Pro with *3.1 GHz Intel Core i5* and *16 GB 2133 MHz LPDDR3* memo
 
 * To watch the video before/after processing, we recommend the open-source portable VLC media player, which can be downloaded at [https://www.videolan.org/vlc/index.html](https://www.videolan.org/vlc/index.html).
 
-## Key Features
+## Key Features <a name="features"></a>
 
 1. Run all processing using a single Jupyter notebook.
 2. Support video trimming and interactive video cropping.
