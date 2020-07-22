@@ -8,7 +8,7 @@
 ## Installation <a name="installation"></a>
 
 * Download and install Anaconda (Python 3.7) at [https://www.anaconda.com/products/individual](https://www.anaconda.com/products/individual) based on your operating system. For example, if you are a MacOS user, please download the *MacOS 64-Bit Command Line Installer*. This codebase is developed and tested on
-a 2017 Macbook Pro with *3.1 GHz Intel Core i5* and *16 GB 2133 MHz LPDDR3* memory.
+a **2017 Macbook Pro** with a 3.1 GHz Intel Core i5 processor and 16 GB 2133 MHz LPDDR3 memory.
 
 * Download this package via `git`:
     ```
@@ -47,7 +47,7 @@ If you find **TrackMo** useful in your research, please cite:
 ```bibtex
 @misc{lin2019trackmo,
   author =       {Zudi Lin},
-  title =        {TraceMo: An Animal Tracking Toolbox for Behavioral Experiments},
+  title =        {TrackMo: An Animal Tracking Toolbox for Behavioral Experiments},
   howpublished = {\url{https://github.com/zudi-lin/tracking_toolbox}},
   year =         {2020}
 }
