@@ -39,7 +39,7 @@ a **2017 Macbook Pro** with a 3.1 GHz Intel Core i5 processor and 16 GB 2133 MHz
 * If the virtual env is not activated, run `source activate tracking`.
 * If you are not in the `tracking_toolbox` folder, navigate to the folder.
 * Run `jupyter notebook` and open `tracking_parallel.ipynb` (please use `which jupyter` to check if the jupyter in this virtual env is being used).
-* For earlier version of the notebooks check `/others`.
+* For the vanilla version without parallelism, use `tracking.ipynb`.
 
 ## Citation <a name="citation"></a>
 If you find **TrackMo** useful in your research, please cite:
@@ -52,3 +52,6 @@ If you find **TrackMo** useful in your research, please cite:
   year =         {2020}
 }
 ```
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/zudi-lin/tracking_toolbox/blob/master/LICENSE) file for details.
