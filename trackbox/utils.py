@@ -70,9 +70,12 @@ def downsample_video(video, ratio=1):
 def rgb2gray_chunk(chunk):
     return rgb2gray(chunk)
 
-def load_video(filename, subsample=3, start=None, end=None, p=None, num_cores=1, down_ratio=1):
+def load_video(filename, subsample=3, start=None, end=None, p=None, 
+               num_cores=1, down_ratio=1, animal_color="white"):
     # load data
     video = skvideo.io.vread(filename)
+    if animal_color == "black": # invert the color
+        video = 255 - video
     metadata = skvideo.io.ffprobe(filename)
 
     if start is not None or end is not None:
@@ -93,12 +96,14 @@ def load_video(filename, subsample=3, start=None, end=None, p=None, num_cores=1,
     return video, video_gray, float(frame_rate) / float(subsample)
 
 def save_video(video, video_gray, center_video, output_name="outputvideo.mp4", 
-               track=False, frame_rate=15, verbosity=0, show_example=False):
+               track=False, frame_rate=15, verbosity=0, show_example=False, animal_color="white"):
     """Save the tracking video.
     """
     print("The tracking video is saved as ", output_name)
     if video.max() < 1.0:
         video = 255-(video*255).astype(np.uint8)
+    if animal_color == "black": # invert the color
+        video = 255 - video
     dummy = np.zeros(video_gray.shape, dtype=np.uint8)
     
     struct = disk(4)[None,:,:]
