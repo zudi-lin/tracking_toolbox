@@ -6,29 +6,37 @@ from skimage.measure import label
 from skimage.morphology import remove_small_objects, erosion, dilation, disk
 from skimage.filters import gaussian
 
-def find_valid_region(image, thres=32, size_thres=128, show_imgs=False):
+def find_valid_region(image, thres=32, size_thres=128, show_imgs=False, cropped_as_valid=False):
     """ Calculate the valid region mask of the chamber.
     """
-    image = (image-image.min())/(image.max()-image.min())
-    image = (image*255).astype(np.uint8)
-    binary = (image < thres).astype(np.uint8)
-    segmentation = label(binary)
-    segmentation = remove_small_objects(segmentation, size_thres)
-    indices, counts = np.unique(segmentation, return_counts=True)
-    # print(indices, counts)
-    
-    if show_imgs:
-        plt.imshow(image)
-        plt.show()
-        for i in np.unique(indices):
-            temp = (segmentation==i).astype(np.uint8)*255
-            plt.imshow(temp)
-            plt.title(i)
-            plt.show()
+    if cropped_as_valid: # use the region cropped by the user as the valid region
+        valid_mask = np.ones(image.shape, dtype=np.uint8)
+        valid_mask[0, :] = 0
+        valid_mask[:, 0] = 0
+        valid_mask[-1, :] = 0
+        valid_mask[:, -1] = 0
 
-    pos = np.argmax(counts)
-    valid_mask = (segmentation==indices[pos]).astype(np.uint8)
-    valid_mask = erosion(valid_mask, np.ones((3,3), dtype=np.uint8))
+    else: # calculate the valid region
+        image = (image-image.min())/(image.max()-image.min())
+        image = (image*255).astype(np.uint8)
+        binary = (image < thres).astype(np.uint8)
+        segmentation = label(binary)
+        segmentation = remove_small_objects(segmentation, size_thres)
+        indices, counts = np.unique(segmentation, return_counts=True)
+        # print(indices, counts)
+        
+        if show_imgs:
+            plt.imshow(image)
+            plt.show()
+            for i in np.unique(indices):
+                temp = (segmentation==i).astype(np.uint8)*255
+                plt.imshow(temp)
+                plt.title(i)
+                plt.show()
+
+        pos = np.argmax(counts)
+        valid_mask = (segmentation==indices[pos]).astype(np.uint8)
+        valid_mask = erosion(valid_mask, np.ones((3,3), dtype=np.uint8))
 
     ycoord, xcoord = np.where(valid_mask==1)
     height = ycoord.max() - ycoord.min()
@@ -54,21 +62,28 @@ def segment_image(image, valid_region, show_imgs=False, thres=128, size_thres=64
     else:
         binary = (image > thres).astype(np.uint8)
 
-    binary = erosion(binary)
     binary = binary * valid_region
+    if binary.sum() > size_thres * 2:
+        binary = erosion(binary)
     
     segmentation = label(binary)
-    if len(np.unique(segmentation))>1:
+    if len(np.unique(segmentation))>2 and binary.sum() > size_thres * 2:
         segmentation = remove_small_objects(segmentation, size_thres)
             
     indices, counts = np.unique(segmentation, return_counts=True)
-    pos = [i for i in range(len(counts)) if counts[i]>200 and counts[i]<1600]
-    # print(indices, counts, pos)
+    if len(indices) > 1 and indices[0] == 0:
+        indices, counts = indices[1:], counts[1:]
+        pos = [np.argmax(counts)]
+    else:
+        pos = []
+
     if len(pos)>=1: 
         target_idx = indices[pos[0]]
         target = (segmentation==target_idx).astype(np.uint8)
-        target = erosion(target)
+        if target.sum() > size_thres * 2:
+            target = erosion(target)
         foreground_coord = np.where(target!=0)
+        # print(foreground_coord)
         center = [int(foreground_coord[0].astype(float).mean()),
                   int(foreground_coord[1].astype(float).mean())]
 
@@ -99,5 +114,24 @@ def segment_image(image, valid_region, show_imgs=False, thres=128, size_thres=64
             
     else:
         center = []
+
+        if show_imgs:
+            plt.figure(figsize=(20,10))
+
+            plt.subplot(131)
+            plt.imshow(image, cmap='gray')
+            plt.title('image')
+            plt.axis('off')
+
+            plt.subplot(132)
+            plt.imshow(binary*255, cmap='gray')
+            plt.title('binary')
+            plt.axis('off')
+
+            plt.subplot(133)
+            plt.imshow(segmentation, cmap='tab20c')
+            plt.title('segmentation')
+            plt.axis('off')
+            plt.show()
     
     return center

@@ -4,6 +4,8 @@ import json
 import numpy as np
 import skvideo.io
 from matplotlib import pyplot as plt
+from scipy.ndimage import zoom
+
 from skimage.color import rgb2gray
 from skimage.measure import label
 from skimage.morphology import remove_small_objects, erosion, dilation, disk
@@ -25,15 +27,26 @@ def string2time(timepoint):
     return int(minutes)*60 + int(seconds)
 
 def center2dist(center1, center2):
-    # Euclidean distance between two centers 
+    """Calculate the Euclidean distance between two centers.
+    """
     dist = np.array(center1) - np.array(center2)
     dist = (dist**2).sum()
     dist = np.sqrt(dist)
     return dist
 
 def trim_video(video, metadata, start=None, end=None):
+    """Trim the video (optional).
+    """
+    frame_rate_max = 60
     frame_rate = int(metadata["video"]['@avg_frame_rate'].split('/')[0])
+
+    # Adjust frame rate based on the video duration.
+    if frame_rate > frame_rate_max:
+        duration = float(metadata["video"]["@duration"])
+        frame_rate = int(round(video.shape[0] / duration))
+    print("Total number of frames in this video: ", video.shape[0])
     print("Frame rate of the video: ", frame_rate)
+
     if start is not None:
         start_frame = string2time(start) * frame_rate
     else:
@@ -46,29 +59,44 @@ def trim_video(video, metadata, start=None, end=None):
     trimmed_video = video[start_frame:end_frame]
     return trimmed_video, frame_rate
 
+def downsample_video(video, ratio=1):
+    """Downsample the video by the specified ratio.
+    """
+    print("Reduce the video resolution by %d times." % ratio)
+    zoom_factor = (1.0, 1.0/ratio, 1.0/ratio, 1.0)
+    video = zoom(video, zoom_factor, order=1)
+    return video
+
 def rgb2gray_chunk(chunk):
     return rgb2gray(chunk)
 
-def load_video(filename, subsample=3, start=None, end=None, p=None, num_cores=1):
+def load_video(filename, subsample=3, start=None, end=None, p=None, num_cores=1, down_ratio=1):
     # load data
     video = skvideo.io.vread(filename)
-
     metadata = skvideo.io.ffprobe(filename)
+
     if start is not None or end is not None:
         video, frame_rate = trim_video(video, metadata, start, end)
     if subsample!=1:
         video = video[::subsample]
+    if down_ratio!=1:
+        video = downsample_video(video, down_ratio)
+
     if p is not None:
         chunks = np.array_split(video.copy(), num_cores)
         results = p.map(rgb2gray_chunk, chunks)
         video_gray = np.concatenate(results, 0)
     else:
         video_gray = rgb2gray(video)
+
     print(video.shape, video_gray.shape)
     return video, video_gray, float(frame_rate) / float(subsample)
 
 def save_video(video, video_gray, center_video, output_name="outputvideo.mp4", 
                track=False, frame_rate=15, verbosity=0, show_example=False):
+    """Save the tracking video.
+    """
+    print("The tracking video is saved as ", output_name)
     if video.max() < 1.0:
         video = 255-(video*255).astype(np.uint8)
     dummy = np.zeros(video_gray.shape, dtype=np.uint8)
